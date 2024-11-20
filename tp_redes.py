@@ -18,7 +18,7 @@ def calcular_rtts_time_exceeded():
 
             if ans is not None and ans.haslayer(ICMP):
                 # solo me quedo con aquellas respuestas que fueron de Time Exceeded
-                if ans[ICMP].type == 11: # tipo time exceeded
+                if ans[ICMP].type == 11 or ans.src == sys.argv[1]: # tipo time exceeded
                     if lista_rtts not in responses:
                         responses[lista_rtts] = []
                     responses[lista_rtts].append((ans.src, rtt))
@@ -64,9 +64,9 @@ def calcular_rtt_promedio_por_ttl(responses):
                 count += 1
                 res += tupla[1]
 
-        rtt_promedio[ttl] = res / count
+        rtt_promedio[ttl] = (ip_con_mas_rtts, res / count)
 
-    return rtt_promedio
+    return dict(sorted(rtt_promedio.items()))
 
 # Calcular RTT entre saltos
 
@@ -84,17 +84,32 @@ def calcular_rtt_entre_saltos(rtt_promedio):
 
         # busco el proximo elemento de ttls_disponibles tal que la diferencia de rrt[j] - rtt[i] sea positiva
         j = i+1    
-        while (j < len(ttls_disponibles) and rtt_promedio[ttls_disponibles[j]] - rtt_promedio[ttls_disponibles[i]] < 0):
+        while (j < len(ttls_disponibles) and rtt_promedio[ttls_disponibles[j]][1] - rtt_promedio[ttls_disponibles[i]][1] < 0):
             j+=1
         
         # si pude encontrar un hop tal que el rtt quede positivo, guardo la diferencia. 
         # Sino guardo 0 
         if (j < len(ttls_disponibles)):
-            rtt_entre_saltos.append(rtt_promedio[ttls_disponibles[j]] - rtt_promedio[ttls_disponibles[i]])
+            rtt_entre_saltos.append(rtt_promedio[ttls_disponibles[j]][1] - rtt_promedio[ttls_disponibles[i]][1])
         else:
             rtt_entre_saltos.append(0)
 
     return rtt_entre_saltos
 
+
+res = calcular_rtts_time_exceeded()
+print(res)
+print("------")
+res = calcular_rtt_promedio_por_ttl(res)
+print(res)
+print("------")
+res = calcular_rtt_entre_saltos(res)
+print(res)
+
 # ejercicio 2
 
+# 192.0.66.20
+# 129.132.19.216
+# 129.187.255.109
+# 41.204.161.206
+# 130.226.237.173
